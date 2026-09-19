@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lista de Compras</title>
+<style>
+  :root{
+    --board: #1f3d2e;
+    --board-edge: #16291e;
+    --chalk: #f2ede1;
+    --chalk-dim: #c9d6c9;
+    --yellow: #e8b84b;
+    --red: #d9705a;
+    --line: rgba(242,237,225,0.14);
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    min-height:100vh;
+    background: var(--board-edge);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    display:flex;
+    justify-content:center;
+    padding: 40px 16px;
+  }
+  .board{
+    width:100%;
+    max-width: 560px;
+    background: var(--board);
+    border-radius: 6px;
+    box-shadow: 0 0 0 10px var(--board-edge), 0 20px 50px rgba(0,0,0,0.4), inset 0 0 60px rgba(0,0,0,0.25);
+    padding: 32px 28px 36px;
+    color: var(--chalk);
+    position: relative;
+  }
+  .board::before{
+    content:"";
+    position:absolute; inset: 14px;
+    border: 2px dashed rgba(242,237,225,0.08);
+    border-radius: 4px;
+    pointer-events:none;
+  }
+  h1{
+    font-family: 'Brush Script MT', 'Segoe Script', cursive;
+    font-size: 44px;
+    margin: 0 0 4px;
+    color: var(--yellow);
+    letter-spacing: 1px;
+    transform: rotate(-1deg);
+  }
+  .subtitle{
+    margin:0 0 24px;
+    font-size: 13px;
+    color: var(--chalk-dim);
+    letter-spacing: 0.3px;
+  }
+  form{
+    display:flex;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  input[type="text"], input[type="number"]{
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--line);
+    color: var(--chalk);
+    font-size: 16px;
+    padding: 8px 4px;
+    font-family: inherit;
+  }
+  input[type="text"]{ flex: 1; }
+  input[type="number"]{ width: 56px; text-align:center; }
+  input::placeholder{ color: var(--chalk-dim); opacity: 0.6; }
+  input:focus{ outline:none; border-bottom-color: var(--yellow); }
+  button{
+    font-family: inherit;
+    cursor:pointer;
+    border: none;
+    border-radius: 4px;
+  }
+  .add-btn{
+    background: var(--yellow);
+    color: #2b2108;
+    font-weight: 600;
+    padding: 0 18px;
+    font-size: 15px;
+  }
+  .add-btn:hover{ filter: brightness(1.08); }
+  .tabs{
+    display:flex;
+    gap: 18px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 8px;
+  }
+  .tab{
+    background: none;
+    color: var(--chalk-dim);
+    font-size: 13px;
+    padding: 2px 0;
+    position: relative;
+  }
+  .tab.active{ color: var(--yellow); }
+  .tab.active::after{
+    content:"";
+    position:absolute; left:0; right:0; bottom:-9px;
+    height: 2px; background: var(--yellow);
+  }
+  ul{ list-style:none; margin:0; padding:0; min-height: 40px; }
+  li{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    padding: 10px 2px;
+    border-bottom: 1px solid var(--line);
+  }
+  li .check{
+    width: 22px; height: 22px;
+    border: 2px solid var(--chalk-dim);
+    border-radius: 50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 13px;
+    color: transparent;
+    flex-shrink:0;
+  }
+  li.done .check{ background: var(--yellow); border-color: var(--yellow); color:#2b2108; }
+  li .name{ flex:1; font-size: 15px; }
+  li .qty{ font-size: 12px; color: var(--chalk-dim); min-width: 34px; text-align:right; }
+  li.done .name{ text-decoration: line-through; color: var(--chalk-dim); }
+  li .remove{
+    background:none;
+    color: var(--red);
+    font-size: 18px;
+    line-height:1;
+    padding: 4px 6px;
+    opacity: 0.6;
+  }
+  li .remove:hover{ opacity: 1; }
+  .empty{
+    color: var(--chalk-dim);
+    font-size: 13px;
+    text-align:center;
+    padding: 24px 0;
+  }
+  .footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top: 18px;
+    font-size: 12px;
+    color: var(--chalk-dim);
+  }
+  .clear-btn{
+    background:none;
+    color: var(--chalk-dim);
+    text-decoration: underline;
+    font-size: 12px;
+  }
+  .clear-btn:hover{ color: var(--yellow); }
+</style>
+</head>
+<body>
+
+<main class="board">
+  <h1>Lista de compras</h1>
+  <p class="subtitle">Anotá lo que falta, tildá lo que ya compraste.</p>
+
+  <form id="add-form">
+    <label for="item-name" style="display:none">Producto</label>
+    <input type="text" id="item-name" name="item-name" placeholder="Ej: tomates" autocomplete="off" required>
+    <label for="item-qty" style="display:none">Cantidad</label>
+    <input type="number" id="item-qty" name="item-qty" min="1" value="1">
+    <button type="submit" class="add-btn" id="add-btn">Agregar</button>
+  </form>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-filter="all" id="tab-all">Todos</button>
+    <button class="tab" data-filter="pending" id="tab-pending">Pendientes</button>
+    <button class="tab" data-filter="done" id="tab-done">Comprados</button>
+  </div>
+
+  <ul id="list"></ul>
+  <p class="empty" id="empty-msg" hidden>No hay productos en esta vista.</p>
+
+  <div class="footer">
+    <span id="counter">0 pendientes</span>
+    <button class="clear-btn" id="clear-done">Borrar comprados</button>
+  </div>
+</main>
+
+<script>
+  const STORAGE_KEY = 'lista-de-compras-items';
+  let items = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  let filter = 'all';
+
+  const listEl = document.getElementById('list');
+  const emptyMsg = document.getElementById('empty-msg');
+  const counter = document.getElementById('counter');
+  const form = document.getElementById('add-form');
+  const nameInput = document.getElementById('item-name');
+  const qtyInput = document.getElementById('item-qty');
+
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  }
+
+  function render(){
+    listEl.innerHTML = '';
+    const visible = items.filter(it => {
+      if(filter === 'pending') return !it.done;
+      if(filter === 'done') return it.done;
+      return true;
+    });
+
+    emptyMsg.hidden = visible.length > 0;
+
+    visible.forEach(it => {
+      const li = document.createElement('li');
+      li.className = it.done ? 'done' : '';
+      li.dataset.id = it.id;
+
+      const check = document.createElement('button');
+      check.className = 'check';
+      check.textContent = '✓';
+      check.setAttribute('aria-label', it.done ? 'Marcar como pendiente' : 'Marcar como comprado');
+      check.addEventListener('click', () => toggleDone(it.id));
+
+      const name = document.createElement('span');
+      name.className = 'name';
+      name.textContent = it.name;
+
+      const qty = document.createElement('span');
+      qty.className = 'qty';
+      qty.textContent = 'x' + it.qty;
+
+      const remove = document.createElement('button');
+      remove.className = 'remove';
+      remove.textContent = '×';
+      remove.setAttribute('aria-label', 'Eliminar producto');
+      remove.addEventListener('click', () => removeItem(it.id));
+
+      li.append(check, name, qty, remove);
+      listEl.appendChild(li);
+    });
+
+    const pendingCount = items.filter(it => !it.done).length;
+    counter.textContent = pendingCount + (pendingCount === 1 ? ' pendiente' : ' pendientes');
+  }
+
+  function addItem(name, qty){
+    items.push({ id: Date.now().toString(), name, qty, done: false });
+    save();
+    render();
+  }
+
+  function toggleDone(id){
+    const it = items.find(i => i.id === id);
+    if(it) it.done = !it.done;
+    save();
+    render();
+  }
+
+  function removeItem(id){
+    items = items.filter(i => i.id !== id);
+    save();
+    render();
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = nameInput.value.trim();
+    const qty = parseInt(qtyInput.value, 10) || 1;
+    if(!name) return;
+    addItem(name, qty);
+    nameInput.value = '';
+    qtyInput.value = '1';
+    nameInput.focus();
+  });
+
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      filter = btn.dataset.filter;
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      render();
+    });
+  });
+
+  document.getElementById('clear-done').addEventListener('click', () => {
+    items = items.filter(i => !i.done);
+    save();
+    render();
+  });
+
+  render();
+</script>
+
+</body>
+</html>

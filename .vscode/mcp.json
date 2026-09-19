@@ -1,0 +1,23 @@
+{
+  "servers": {
+    "blender": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "blender-mcp"
+      ]
+    },
+    "Roblox_Studio": {
+      "type": "http",
+      "url": "http://localhost:44755"
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    }
+  }
+}
